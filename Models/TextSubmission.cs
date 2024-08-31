@@ -1,4 +1,6 @@
-﻿using System.ComponentModel.DataAnnotations;
+﻿using POC837Parser;
+using System.ComponentModel.DataAnnotations;
+using System.Text.Json.Serialization;
 
 namespace TextParserApi.Models
 {
@@ -9,6 +11,7 @@ namespace TextParserApi.Models
         /// </summary>
         /// <example>ENTER_THE_CONTENTS_OF_THE_837_HERE</example>
         [Required(ErrorMessage = "The text of the 837 file is required.")]
-        public string Text { get; set; }
+       // [JsonConverter(typeof(EdiTextConverter))]
+        public string EDIRaw { get; set; }
     }
 }

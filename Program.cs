@@ -1,17 +1,18 @@
-using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Diagnostics;
-using Microsoft.Extensions.DependencyInjection;
-using Microsoft.Extensions.Hosting;
 using Microsoft.OpenApi.Any;
 using Microsoft.OpenApi.Models;
+using POC837Parser.DataAccess;
 using System.Net;
-using System.Reflection;
+using System.Text.Json;
 
 var builder = WebApplication.CreateBuilder(args);
 
 builder.Services.AddControllers().AddJsonOptions(options =>
 {
     options.JsonSerializerOptions.WriteIndented = true;
+    options.JsonSerializerOptions.AllowTrailingCommas = true;
+    options.JsonSerializerOptions.ReadCommentHandling = JsonCommentHandling.Skip;
+    //options.JsonSerializerOptions.AllowUnquotedKeys = true;
 });
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen(c =>
@@ -35,11 +36,6 @@ builder.Services.AddSwaggerGen(c =>
                         }
                     }
     });
-
-    // Set the comments path for the Swagger JSON and UI.
-    //var xmlFile = $"{Assembly.GetExecutingAssembly().GetName().Name}.xml";
-    //var xmlPath = Path.Combine(AppContext.BaseDirectory, xmlFile);
-    //c.IncludeXmlComments(xmlPath);
 });
 
 // Add logging
@@ -57,6 +53,21 @@ builder.Services.AddCors(options =>
                .AllowAnyHeader();
     });
 });
+
+//builder.Services.AddSingleton<BlobStorageService>();
+
+builder.Services.AddSingleton<BlobStorageService>(sp =>
+{
+    var configuration = sp.GetRequiredService<IConfiguration>();
+    BlobStorageConfig.ConnectionString = configuration["BlobStorageConnectionString"]
+        ?? throw new InvalidOperationException("Blob storage connection string not found.");
+
+    var logger = sp.GetRequiredService<ILogger<BlobStorageService>>();
+    return new BlobStorageService(logger);
+});
+
+
+
 builder.Services.AddApplicationInsightsTelemetry(new Microsoft.ApplicationInsights.AspNetCore.Extensions.ApplicationInsightsServiceOptions
 {
     ConnectionString = builder.Configuration["APPLICATIONINSIGHTS_CONNECTION_STRING"]
@@ -102,6 +113,7 @@ app.UseSwaggerUI(c => c.SwaggerEndpoint("/swagger/v1/swagger.json", "Healthcare 
 
 
 app.UseHttpsRedirection();
+//app.UseMiddleware<JsonSanitizationMiddleware>();
 app.UseCors("AllowAll");
 app.UseAuthorization();
 app.MapControllers();

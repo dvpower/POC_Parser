@@ -1,4 +1,5 @@
-﻿using System;
+﻿using POC837Parser.Parsers;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -9,7 +10,10 @@ namespace _837ParserPOC.DataModels
     public class Subscriber
     {
         public HierarchicalLevel HL { get; set; }
+
+        public SubscriberInformation SubscriberInformation { get; set; } // 2000B
         public SubscriberName SubscriberName { get; set; } // 2010BA
+       
         public SubscriberAddress SubscriberAddress { get; set; } // 2010BA
         public SubscriberDemographicInfo SubscriberDemographicInfo { get; set; } // 2010BA
         public PayerName PayerName { get; set; } // 2010BB

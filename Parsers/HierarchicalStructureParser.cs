@@ -1,4 +1,5 @@
 ﻿using _837ParserPOC.DataModels;
+using POC837Parser.Parsers;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -16,6 +17,7 @@ namespace _837ParserPOC.Parsers
         private readonly PayToAddressParser _payToAddressParser;
         private readonly PayToPlanNameParser _payToPlanNameParser;
         private readonly SubscriberNameParser _subscriberNameParser;
+        private readonly SubscriberInformationParser _subscriberInformationParser;
         private readonly SubscriberAddressParser _subscriberAddressParser;
         private readonly SubscriberDemographicInfoParser _subscriberDemographicInfoParser;
         private readonly PayerNameParser _payerNameParser;
@@ -42,6 +44,7 @@ namespace _837ParserPOC.Parsers
             _payToAddressParser = new PayToAddressParser();
             _payToPlanNameParser = new PayToPlanNameParser();
             _subscriberNameParser = new SubscriberNameParser();
+            _subscriberInformationParser = new SubscriberInformationParser();
             _subscriberAddressParser = new SubscriberAddressParser();
             _subscriberDemographicInfoParser = new SubscriberDemographicInfoParser();
             _payerNameParser = new PayerNameParser();
@@ -264,6 +267,12 @@ namespace _837ParserPOC.Parsers
                 {
                     subscriber.SubscriberName = _subscriberNameParser.Parse(lines[i]);
                 }
+
+                else if (lines[i].StartsWith("SBR*")) // Loop 2000B (Subscriber Info)
+                {
+                    subscriber.SubscriberInformation = _subscriberInformationParser.Parse(lines[i]);
+                }
+
                 else if (lines[i].StartsWith("N3*")) // 2010BA Subscriber Address
                 {
                     var addressLines = new List<string> { lines[i] };

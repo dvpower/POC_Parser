@@ -19,21 +19,22 @@ namespace _837ParserPOC.DataModels
 
         public PayToAddressName PayToAddressName { get; set; }
 
-        public string GetTaxonomyCode()
-        {
-            return SecondaryIdentifications.FirstOrDefault(si => si.ReferenceIdentificationQualifier == "ZZ")?.ReferenceIdentification;
-        }
+        //public string GetTaxonomyCode()
+        //{
+        //    return SecondaryIdentifications.FirstOrDefault(si => si.ReferenceIdentificationQualifier == "ZZ")?.ReferenceIdentification;
+        //}
 
-        public string GetTaxIdentificationNumber()
-        {
-            return SecondaryIdentifications.FirstOrDefault(si => si.ReferenceIdentificationQualifier == "EI")?.ReferenceIdentification;
-        }
+        //public string GetTaxIdentificationNumber()
+        //{
+        //    return SecondaryIdentifications.FirstOrDefault(si => si.ReferenceIdentificationQualifier == "EI")?.ReferenceIdentification;
+        //}
 
     }
 
     public class ProviderName
     {
         public string EntityIdentifierCode { get; set; }
+        public string EntityIdentifierCodeDescription { get; set; }
         public string EntityTypeQualifier { get; set; }
         public string ProviderLastOrOrganizationName { get; set; }
         public string ProviderFirstName { get; set; }
@@ -65,6 +66,7 @@ namespace _837ParserPOC.DataModels
     public class PayToAddress
     {
         public string EntityIdentifierCode { get; set; }
+        public string EntityIdentifierCodeDescription { get; set; }
         public string AddressLine1 { get; set; }
         public string AddressLine2 { get; set; }
         public string City { get; set; }
@@ -76,6 +78,7 @@ namespace _837ParserPOC.DataModels
     public class PayToPlanName
     {
         public string EntityIdentifierCode { get; set; }
+        public string EntityIdentifierCodeDescription { get; set; }
         public string PlanName { get; set; }
     }
 }

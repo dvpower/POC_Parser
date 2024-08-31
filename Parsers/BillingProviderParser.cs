@@ -21,6 +21,7 @@ namespace _837ParserPOC.Parsers
             return new ProviderName
             {
                 EntityIdentifierCode = elements[1],
+                EntityIdentifierCodeDescription = EntityIdentifierCodeQualifiers.GetDescription(elements[1]),
                 EntityTypeQualifier = elements[2],
                 ProviderLastOrOrganizationName = elements[3],
                 ProviderFirstName = elements.Length > 4 ? elements[4] : null,
@@ -99,6 +100,7 @@ namespace _837ParserPOC.Parsers
             return new PayToAddress
             {
                 EntityIdentifierCode = "87",  // Hardcoded as per 837 specification
+                EntityIdentifierCodeDescription = EntityIdentifierCodeQualifiers.GetDescription("87"),
                 AddressLine1 = n3Elements[1],
                 AddressLine2 = n3Elements.Length > 2 ? n3Elements[2].TrimEnd('~') : null,
                 City = n4Elements[1],
@@ -123,6 +125,7 @@ namespace _837ParserPOC.Parsers
             return new PayToPlanName
             {
                 EntityIdentifierCode = elements[1],
+                EntityIdentifierCodeDescription = EntityIdentifierCodeQualifiers.GetDescription(elements[1]),
                 PlanName = elements[3].TrimEnd('~')
             };
         }

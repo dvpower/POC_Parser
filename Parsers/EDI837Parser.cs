@@ -1,4 +1,5 @@
 ﻿using _837ParserPOC.DataModels;
+using POC837Parser.Models;
 using System;
 using System.Text.Json;
 using System.Text.Json.Serialization;

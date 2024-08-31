@@ -21,6 +21,7 @@ namespace _837ParserPOC.Parsers
             return new ReferenceIdentificationObj
             {
                 ReferenceIdentificationQualifier = elements[1],
+                ReferenceIdentificationQualifierDescription =  ReferenceIdentificationQualifiers.GetDescription(elements[1]),
                 ReferenceIdentification = elements[2],
                 Description = elements.Length > 3 ? elements[3].TrimEnd('~') : null
             };

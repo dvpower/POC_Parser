@@ -44,7 +44,7 @@ namespace _837ParserPOC.Parsers
 
             serviceLine.RevenueCode = elements[1]; /// e.g. 0305
             string[] procedureElements = elements[2].Split(':');
-            serviceLine.ProcedureCode = procedureElements[1];  // e.g.  HC:85025
+            serviceLine.ProcedureCode = procedureElements.Length >1 ? procedureElements[1]: "";  // e.g.  HC:85025
             serviceLine.ChargeAmount = decimal.Parse(elements[3]);
             serviceLine.UnitOrBasisOfMeasurement = elements[4];
             serviceLine.ServiceUnitCount = int.Parse(elements[5]);        

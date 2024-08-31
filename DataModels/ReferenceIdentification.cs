@@ -9,6 +9,7 @@ namespace _837ParserPOC.DataModels
     public class ReferenceIdentificationObj
     {
         public string ReferenceIdentificationQualifier { get; set; }
+        public string ReferenceIdentificationQualifierDescription { get; set; }
         public string ReferenceIdentification { get; set; }
         public string Description { get; set; }
     }

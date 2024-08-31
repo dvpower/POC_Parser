@@ -1,5 +1,5 @@
 ﻿using _837ParserPOC.DataModels;
-using _837ParserPOC.Parsers;
+using POC837Parser.Models;
 using System;
 using System.Collections.Generic;
 using System.Linq;
