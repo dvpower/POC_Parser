@@ -1,5 +1,6 @@
 ﻿namespace POC837Parser.DataAccess
 {
+    using _837ParserPOC.DataModels;
     using Azure.Storage.Blobs;
     using Azure.Storage.Blobs.Models;
     using POC837Parser.Models;
@@ -9,7 +10,8 @@
 
     public class BlobStorageService
     {
-        private readonly BlobContainerClient _containerClient;
+        private readonly BlobContainerClient _submissionsContainerClient;
+        private readonly BlobContainerClient _claimsContainerClient;
         private readonly ILogger<BlobStorageService> _logger;
 
         public BlobStorageService(ILogger<BlobStorageService> logger)
@@ -18,8 +20,12 @@
             try
             {
                 var blobServiceClient = new BlobServiceClient(BlobStorageConfig.ConnectionString);
-                _containerClient = blobServiceClient.GetBlobContainerClient(BlobStorageConfig.ContainerName);
-                _containerClient.CreateIfNotExists();
+                _submissionsContainerClient = blobServiceClient.GetBlobContainerClient(BlobStorageConfig.SubmissionsContainerName);
+                _submissionsContainerClient.CreateIfNotExists();
+
+                _claimsContainerClient = blobServiceClient.GetBlobContainerClient(BlobStorageConfig.ClaimsContainerName);
+                _claimsContainerClient.CreateIfNotExists();
+
             }
             catch (Exception ex)
             {
@@ -27,17 +33,30 @@
             }
         }
 
-        public async Task<string> UploadJsonBlobAsync(string json, string blobName)
+        public async Task<string> SaveSubmission(string json, string blobName)
         {
-            if (_containerClient == null)
+            if (_submissionsContainerClient == null)
             {
-                throw new InvalidOperationException("BlobStorageService is not properly initialized. Is the storage emulator running?");
+                throw new InvalidOperationException($"BlobStorageService (sublissions) is not properly initialized. Is the storage emulator running?");
             }
 
-            var blobClient = _containerClient.GetBlobClient(blobName);
+            var blobClient = _submissionsContainerClient.GetBlobClient(blobName);
             await blobClient.UploadAsync(BinaryData.FromString(json), overwrite: true);
             return blobClient.Uri.ToString();
         }
+
+        public async Task<string> SaveClaim(string json, string blobName)
+        {
+            if (_claimsContainerClient == null)
+            {
+                throw new InvalidOperationException($"BlobStorageService (claims) is not properly initialized. Is the storage emulator running?");
+            }
+
+            var blobClient = _claimsContainerClient.GetBlobClient(blobName);
+            await blobClient.UploadAsync(BinaryData.FromString(json), overwrite: true);
+            return blobClient.Uri.ToString();
+        }
+
 
         public async Task<List<Guid>> ListSubmissionIdsAsync()
         {
@@ -45,7 +64,7 @@
 
             try
             {
-                await foreach (BlobItem blobItem in _containerClient.GetBlobsAsync())
+                await foreach (BlobItem blobItem in _submissionsContainerClient.GetBlobsAsync())
                 {
                     if (Guid.TryParse(Path.GetFileNameWithoutExtension(blobItem.Name), out Guid submissionId))
                     {
@@ -67,7 +86,7 @@
             try
             {
                 string blobName = $"{submissionId}.json";
-                BlobClient blobClient = _containerClient.GetBlobClient(blobName);
+                BlobClient blobClient = _submissionsContainerClient.GetBlobClient(blobName);
 
                 if (await blobClient.ExistsAsync())
                 {
@@ -99,5 +118,47 @@
                 throw;
             }
         }
+
+
+        public async Task<Claim> GetClaimAsync(Guid claimId)
+        {
+            try
+            {
+                string blobName = $"{claimId}.json";
+                BlobClient blobClient = _claimsContainerClient.GetBlobClient(blobName);
+
+                if (await blobClient.ExistsAsync())
+                {
+                    BlobDownloadResult downloadResult = await blobClient.DownloadContentAsync();
+                    string jsonContent = downloadResult.Content.ToString();
+
+                    // Deserialize the JSON string to EDI837Result
+                    Claim result = JsonSerializer.Deserialize<Claim>(jsonContent, new JsonSerializerOptions
+                    {
+                        PropertyNameCaseInsensitive = true
+                    });
+
+                    return result;
+                }
+                else
+                {
+                    _logger.LogWarning($"Document with claim ID {claimId} not found.");
+                    return null;
+                }
+            }
+            catch (JsonException ex)
+            {
+                _logger.LogError(ex, $"Error deserializing document with claim ID {claimId}");
+                throw;
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, $"Error retrieving document with claim ID {claimId}");
+                throw;
+            }
+        }
+
+
+
     }
 }

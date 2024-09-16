@@ -1,4 +1,5 @@
-﻿using POC837Parser.Parsers;
+﻿using POC837Parser.DataModels;
+using POC837Parser.Parsers;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -12,26 +13,28 @@ namespace _837ParserPOC.DataModels
         public HierarchicalLevel HL { get; set; }
 
         public SubscriberInformation SubscriberInformation { get; set; } // 2000B
-        public SubscriberName SubscriberName { get; set; } // 2010BA
-       
-        public SubscriberAddress SubscriberAddress { get; set; } // 2010BA
+
+        public List<NM1Name> SubscriberNames { get; set; } = new List<NM1Name>();
+
+        public List<ReferenceIdentificationObj> AdditionalReferenceInformation { get; set; } = new List<ReferenceIdentificationObj>();
+        
         public SubscriberDemographicInfo SubscriberDemographicInfo { get; set; } // 2010BA
-        public PayerName PayerName { get; set; } // 2010BB
+   
         public List<Patient> Patients { get; set; } = new List<Patient>();
         public List<Claim> Claims { get; set; } = new List<Claim>();
     }
 
-    public class SubscriberName
-    {
-        public string EntityIdentifierCode { get; set; }
-        public string EntityTypeQualifier { get; set; }
-        public string SubscriberLastName { get; set; }
-        public string SubscriberFirstName { get; set; }
-        public string SubscriberMiddleName { get; set; }
-        public string SubscriberNameSuffix { get; set; }
-        public string IdentificationCodeQualifier { get; set; }
-        public string SubscriberIdentifier { get; set; }
-    }
+    //public class SubscriberName
+    //{
+    //    public string EntityIdentifierCode { get; set; }
+    //    public string EntityTypeQualifier { get; set; }
+    //    public string SubscriberLastName { get; set; }
+    //    public string SubscriberFirstName { get; set; }
+    //    public string SubscriberMiddleName { get; set; }
+    //    public string SubscriberNameSuffix { get; set; }
+    //    public string IdentificationCodeQualifier { get; set; }
+    //    public string SubscriberIdentifier { get; set; }
+    //}
 
     public class SubscriberAddress
     {

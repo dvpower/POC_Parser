@@ -1,6 +1,7 @@
 ﻿using _837ParserPOC.DataModels;
 using Microsoft.AspNetCore.Http.HttpResults;
 using Microsoft.VisualBasic;
+using POC837Parser.DataModels;
 using System;
 using System.Collections.Generic;
 using System.Globalization;
@@ -21,12 +22,13 @@ namespace _837ParserPOC.Parsers
                 throw new ArgumentException("Invalid CLM segment for Claim Information");
             }
 
+            line = line.EndsWith("~") ? line[..^1] : line;
             string[] elements = line.Split('*');
-
+            
             var providerAcceptAssignmentCode = elements.Length > 6 ? elements[6] : null;
             var benefitsAssignmentCertificationIndicator = elements.Length > 7 ? elements[7] : null;
             var releaseOfInformationCode = elements.Length > 8 ? elements[8] : null;
-            var patientSignatureSourceCode = elements.Length > 9 ? elements[9].TrimEnd('~') : null;
+            var patientSignatureSourceCode = elements.Length > 9 ? elements[9] : null;
 
             return new ClaimInformation
             {
@@ -69,53 +71,200 @@ namespace _837ParserPOC.Parsers
 
     }
 
-    public class ClaimDateParser
+    public class NoteParser
     {
-        public void ParseServiceDates(string line, ClaimInformation claimInfo)
+        public NoteElement Parse(string line)
         {
-            if (string.IsNullOrEmpty(line) || !line.StartsWith("DTP*434*"))
+            if (string.IsNullOrEmpty(line) || !line.StartsWith("NTE*"))
             {
-                throw new ArgumentException("Invalid DTP segment for Claim Service Dates");
+                throw new ArgumentException("Invalid NTE segment");
             }
 
+            line = line.EndsWith("~") ? line[..^1] : line;
             string[] elements = line.Split('*');
-            string[] dates = elements[3].TrimEnd('~').Split('-');
 
-            claimInfo.ServiceDateFrom = DateTime.ParseExact(dates[0], "yyyyMMdd", CultureInfo.InvariantCulture);
-            if (dates.Length > 1)
+            return new NoteElement
             {
-                claimInfo.ServiceDateTo = DateTime.ParseExact(dates[1], "yyyyMMdd", CultureInfo.InvariantCulture);
-            }
+               NoteReferenceCode = elements[1],
+               Description = elements.Length > 2 ? elements[2] : null,
+            };
         }
     }
 
-    public class ClaimAmountParser
+    public class ClaimContractParser
     {
-        public ClaimAmount Parse(string[] lines)
+        public ClaimContractInfo Parse(string line)
         {
-            var claimAmount = new ClaimAmount();
-
-            foreach (var line in lines)
+            if (string.IsNullOrEmpty(line) || !line.StartsWith("CN1*"))
             {
-                if (line.StartsWith("AMT*F5*"))
-                {
-                    string[] elements = line.Split('*');
-                    claimAmount.PatientAmountPaid = decimal.Parse(elements[2].TrimEnd('~'));
-                }
-                else if (line.StartsWith("AMT*NE*"))
-                {
-                    string[] elements = line.Split('*');
-                    claimAmount.TotalPurchasedServiceAmount = decimal.Parse(elements[2].TrimEnd('~'));
-                }
+                throw new ArgumentException("Invalid CN1 segment");
             }
 
-            return claimAmount;
+            line = line.EndsWith("~") ? line[..^1] : line;
+            string[] elements = line.Split('*');
+
+            return new ClaimContractInfo
+            {
+                ContractTypeCode = elements[1],  // TODO : Contract type code info
+                ContractTypeDescription = ContractCodeQualifiers.GetDescription(elements[1]),
+                ContractAmount = elements.Length > 2 ? decimal.Parse(elements[2]) : null,
+                ContractPercentage = elements.Length > 3 ? decimal.Parse(elements[3]) : null,
+                ContractCode = elements.Length > 4 ? elements[4] : null,
+                TermsDiscountPercentage = elements.Length > 5 ? decimal.Parse(elements[5]) : null,
+                ContractVersionIdentifier = elements.Length > 6 ? elements[6] : null,
+            };
         }
     }
+
+    public class ClaimLineParser
+    {
+        public ClaimLineItem Parse(string line)
+        {
+            if (string.IsNullOrEmpty(line) || !line.StartsWith("CL1*"))
+            {
+                throw new ArgumentException("Invalid CL1 segment");
+            }
+
+            line = line.EndsWith("~") ? line[..^1] : line;
+            string[] elements = line.Split('*');
+
+            return new ClaimLineItem
+            {
+                LineItemControlNumber = elements[1],
+                Quantity = elements.Length > 2 ? int.Parse(elements[2]) : 0,
+                UnitOrBasisForMeasureCode = elements.Length > 3 ? elements[3] : null,
+                ChargeAmount = elements.Length > 4 ? decimal.Parse(elements[4]) : 0,
+                Units = elements.Length > 5 ? int.Parse(elements[5]) : 0,
+                DateOfService = elements.Length >65 ? DateTime.ParseExact(elements[6], "yyyyMMdd", CultureInfo.InvariantCulture) : null,
+                PlaceOfServiceCode = elements.Length > 7 ? elements[7] : null,
+                TypeOfServiceCode = elements.Length > 8 ? elements[8] : null,
+                EpsdtIndicator = elements.Length > 9 ? bool.Parse(elements[9]) : false,
+                FamilyPlanningIndicator = elements.Length > 10 ? bool.Parse(elements[10]) : false,
+            };
+        }
+    }
+
+    public class ConditionsParser
+    {
+        public ClaimConditionInfo Parse(string line)
+        {
+            if (string.IsNullOrEmpty(line) || !line.StartsWith("CRC*"))
+            {
+                throw new ArgumentException("Invalid CRC segment");
+            }
+
+            line = line.EndsWith("~") ? line[..^1] : line;
+            string[] elements = line.Split('*');
+
+            return new ClaimConditionInfo
+            {
+                CodeCategory = elements[1],
+                CodeCategoryDescription= ClaimConditionQualifiers.GetDescription(elements[1]),
+                ConditionIndicator = elements.Length > 2 ? elements[2] : null,
+                ConditionCode1 = elements.Length > 3 ? elements[3] : null,
+                ConditionCode2 = elements.Length > 4 ? elements[4] : null,
+                ConditionCode3 = elements.Length > 5 ? elements[5] : null,
+                ConditionCode4 = elements.Length > 6 ? elements[6] : null,
+                ConditionCode5 = elements.Length > 7 ? elements[7] : null
+            };
+        }
+    }
+
+
+    //public class ClaimAmountParser
+    //{
+    //    public ClaimAmount Parse(string[] lines)
+    //    {
+    //        var claimAmount = new ClaimAmount();
+
+    //        foreach (var line in lines)
+    //        {
+    //            if (line.StartsWith("AMT*F5*"))
+    //            {
+    //                string[] elements = line.Split('*');
+    //                claimAmount.PatientAmountPaid = decimal.Parse(elements[2].TrimEnd('~'));
+    //            }
+    //            else if (line.StartsWith("AMT*NE*"))
+    //            {
+    //                string[] elements = line.Split('*');
+    //                claimAmount.TotalPurchasedServiceAmount = decimal.Parse(elements[2].TrimEnd('~'));
+    //            }
+    //        }
+
+    //        return claimAmount;
+    //    }
+    //}
+
+    public class HISegmentParser
+    {
+        public  List<HISegment> Parse(string hiSegment)
+        {
+            var result = new List<HISegment>();
+
+            // Remove the "HI*" prefix and the "~" suffix
+            hiSegment = hiSegment.Trim('~');
+            if (hiSegment.StartsWith("HI*"))
+            {
+                hiSegment = hiSegment.Substring(3);
+            }
+
+            // Split the segment into individual entries
+            var entries = hiSegment.Split('*');
+
+            foreach (var entry in entries)
+            {
+                var parts = entry.Split(':');
+                var segment = new HISegment
+                {
+                    Qualifier = parts[0]
+                };
+
+                if (parts.Length > 1)
+                    segment.Code = parts[1];
+
+                if (parts.Length > 2)
+                {
+                    if (parts[2] == "RD8" && parts.Length > 3)
+                    {
+                        var dates = parts[3].Split('-');
+                        if (DateTime.TryParseExact(dates[0], "yyyyMMdd", null, System.Globalization.DateTimeStyles.None, out DateTime startDate))
+                        {
+                            segment.Date = startDate;
+                        }
+                        if (dates.Length > 1 && DateTime.TryParseExact(dates[1], "yyyyMMdd", null, System.Globalization.DateTimeStyles.None, out DateTime endDate))
+                        {
+                            segment.EndDate = endDate;
+                        }
+                    }
+                    else
+                    {
+                        segment.PresentOnAdmissionIndicator = parts[2];
+                    }
+                }
+
+                if (parts.Length > 3 && parts[2] != "RD8")
+                {
+                    if (parts[3] == "D8" && parts.Length > 4)
+                    {
+                        if (DateTime.TryParseExact(parts[4], "yyyyMMdd", null, System.Globalization.DateTimeStyles.None, out DateTime date))
+                        {
+                            segment.Date = date;
+                        }
+                    }
+                }
+
+                result.Add(segment);
+            }
+
+            return result;
+        }
+    }
+
+
 
     public class DiagnosisCodeParser
     {
-        public List<DiagnosisCode> Parse(string line)
+        public List<HISegment> Parse(string line)
         {
             if (string.IsNullOrEmpty(line) || !line.StartsWith("HI*"))
             {
@@ -123,7 +272,7 @@ namespace _837ParserPOC.Parsers
             }
 
             string[] elements = line.Split('*');
-            var diagnosisCodes = new List<DiagnosisCode>();
+            var diagnosisCodes = new List<HISegment>();
 
             for (int i = 1; i < elements.Length; i++)
             {
@@ -132,10 +281,10 @@ namespace _837ParserPOC.Parsers
                 {
                     string qualifierCode = codeElements[0];
 
-                    diagnosisCodes.Add(new DiagnosisCode
+                    diagnosisCodes.Add(new HISegment
                     {
-                        QualifierCode = qualifierCode,
-                        QualifierDescription = DiagnosisCodeQualifiers.GetDescription(qualifierCode),
+                        Qualifier = qualifierCode,
+                        //QualifierDescription = DiagnosisCodeQualifiers.GetDescription(qualifierCode),
                         Code = codeElements[1]  // ICD-10 code
                     });
                 }

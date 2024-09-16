@@ -6,6 +6,7 @@ using System.Text.Json;
 using System;
 using TextParserApi.Models;
 using System.Net.Http.Json;
+using _837ParserPOC.DataModels;
 
 namespace TextParserApi.Controllers
 {
@@ -23,7 +24,7 @@ namespace TextParserApi.Controllers
         }
 
 
-        [HttpGet("{submissionId}")]
+        [HttpGet("submission/{submissionId}")]
         [ProducesResponseType(typeof(EDI837Result), StatusCodes.Status200OK)]
         [ProducesResponseType(StatusCodes.Status404NotFound)]
         [ProducesResponseType(StatusCodes.Status500InternalServerError)]
@@ -51,6 +52,37 @@ namespace TextParserApi.Controllers
                 return StatusCode(500, "An error occurred while retrieving the document.");
             }
         }
+
+
+        [HttpGet("claim/{claimId}")]
+        [ProducesResponseType(typeof(EDI837Result), StatusCodes.Status200OK)]
+        [ProducesResponseType(StatusCodes.Status404NotFound)]
+        [ProducesResponseType(StatusCodes.Status500InternalServerError)]
+        public async Task<IActionResult> GetClaim(Guid claimId)
+        {
+            try
+            {
+                Claim document = await _blobStorageService.GetClaimAsync(claimId);
+
+                if (document == null)
+                {
+                    return NotFound($"Document with claim ID {claimId} not found.");
+                }
+
+                return Ok(document);
+            }
+            catch (JsonException ex)
+            {
+                //_logger.LogError(ex, $"Error deserializing document with submission ID {submissionId}");
+                return StatusCode(500, "An error occurred while processing the document.");
+            }
+            catch (Exception ex)
+            {
+                //_logger.LogError(ex, $"Error retrieving document with submission ID {submissionId}");
+                return StatusCode(500, "An error occurred while retrieving the document.");
+            }
+        }
+
 
 
         [HttpGet("submissions")]
@@ -97,7 +129,20 @@ namespace TextParserApi.Controllers
             result.SubmissionID = submissionId;
 
             string parsedJson = JsonSerializer.Serialize(result);
-            await _blobStorageService.UploadJsonBlobAsync(parsedJson, blobName);
+          //  await _blobStorageService.SaveSubmission(parsedJson, blobName);
+
+            var claims  =  result.TransactionSets
+                .SelectMany(ts => ts.HierarchicalStructure.BillingProviders)
+                .SelectMany(bp => bp.Subscribers)
+                .SelectMany(s => s.Claims)
+                .ToList();
+
+            
+            foreach (var claim in claims)
+            {
+                string parsedClaim = JsonSerializer.Serialize(claim);
+               // await _blobStorageService.SaveClaim(parsedClaim, $"{claim.ClaimId}.json");
+            }
 
             return Ok(result);
         }

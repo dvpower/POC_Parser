@@ -26,7 +26,7 @@ namespace _837ParserPOC.Parsers
         {
             var transactionSet = new TransactionSet();
 
-            string stLine = _stParser.FindSTSegment(lines);
+            string stLine = _stParser.FindSTSegment(lines);  // Transaction Set (ST)
             string bhtLine = _bhtParser.FindBHTSegment(lines);
             string seLine = _seParser.FindSESegment(lines);
 

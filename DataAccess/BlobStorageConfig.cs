@@ -4,6 +4,7 @@
     {
         //public const string ConnectionString = "UseDevelopmentStorage=true";
         public static string ConnectionString { get; set; }
-        public const string ContainerName = "parsed-claims";
+        public const string SubmissionsContainerName = "submissions";
+        public const string ClaimsContainerName = "claims";
     }
 }

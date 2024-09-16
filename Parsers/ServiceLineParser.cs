@@ -1,16 +1,11 @@
 ﻿using _837ParserPOC.DataModels;
-using System;
-using System.Collections.Generic;
-using System.Globalization;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+using POC837Parser.Parsers;
 
 namespace _837ParserPOC.Parsers
 {
     public class ServiceLineParser
     {
-        public ServiceLine Parse(string[] lines)
+        public ServiceLine Parse(List<string> lines)
         {
             var serviceLine = new ServiceLine();
 
@@ -24,14 +19,22 @@ namespace _837ParserPOC.Parsers
                 {
                     ParseSV1Segment(line, serviceLine);
                 }
-
                 else if (line.StartsWith("SV2*")) // Institutional (837I) claims
                 {
                     ParseSV2Segment(line, serviceLine);
                 }
-                else if (line.StartsWith("DTP*472*"))
+                else if (line.StartsWith("PWK*"))
                 {
-                    ParseServiceDates(line, serviceLine);
+                    serviceLine.Paperwork.Add(new PaperworkParser().Parse(line)); 
+                }
+                else if (line.StartsWith("DTP*"))
+                {
+                    serviceLine.Dates.Add(new DateParser().Parse(line));
+                }
+                else if (line.StartsWith("REF*"))
+                {
+                    var p = new ReferenceIdentificationParser();
+                    serviceLine.ReferenceInformation.Add(p.Parse(line));
                 }
             }
 
@@ -56,10 +59,7 @@ namespace _837ParserPOC.Parsers
 
             try
             {
-
-                string[] elements = line.Replace('~', ' ').Split('*');
-
-                //serviceLine.RevenueCode = elements[1]; /// e.g. 0305
+                string[] elements = line.Replace('~', ' ').Split('*');       
                 string[] procedureElements = elements[1].Split(':');
                 serviceLine.ProcedureCode = procedureElements[1];  // e.g.  HC:85025
                 serviceLine.ChargeAmount = decimal.Parse(elements[2]);
@@ -72,13 +72,6 @@ namespace _837ParserPOC.Parsers
             }
             
         }
-        private void ParseServiceDates(string line, ServiceLine serviceLine)
-        {
-            string[] elements = line.TrimEnd('~').Split('*');
-            string[] dates = elements[3].TrimEnd('~').Split('-');
 
-            serviceLine.ServiceDateFrom = DateTime.ParseExact(dates[0], "yyyyMMdd", CultureInfo.InvariantCulture);
-            serviceLine.ServiceDateTo = DateTime.ParseExact(dates[dates.Length-1], "yyyyMMdd", CultureInfo.InvariantCulture); // May be a range
-        }
     }
 }

@@ -49,14 +49,31 @@
         { "XZ", "Pharmacy Prescription Number" },
         { "YY", "Geographic Number" },
         { "ZH", "Clinic Number" },
-        { "ZZ", "Mutually Defined" }
+        { "ZZ", "Mutually Defined" },
+        { "2U", "Payer Identification Number" },
+        { "ABB", "Authorized Entity" },
+        { "D9", "Claim Number" },
+        { "E9", "Attachment Code" },
+        { "EO", "Submitter Identification Number" },
+        { "P4", "Project Code" },
+        { "PID", "Program Identification Number" },
+        { "RB", "Rate code number" },
+        { "Y4", "Agency Claim Number" }, 
+            { "PXC", "Health Care Provider Taxonomy Code" }, // Additional
+            { "B3", "Preferred Provider Organization Number" },
+            { "FH", "Clinic Number" },
+            { "G5", "Provider Site Number" },
+            { "U3", "Unique Supplier Identification Number (USIN)" },
+            { "X5", "State Industrial Accident Provider Number" },
+            { "PRN", "Provider Number" },
+            { "HPI___", "HIPAA National Provider Identifier" }
     };
 
     public static string GetDescription(string qualifierCode)
     {
         return Descriptions.TryGetValue(qualifierCode, out var description)
             ? description
-            : "Unknown Reference Identification Qualifier";
+            : $"Unknown Reference Identification Qualifier {qualifierCode}";
     }
 
     public static bool IsValid(string qualifierCode)

@@ -1,4 +1,5 @@
-﻿using System;
+﻿using POC837Parser.DataModels;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -9,22 +10,31 @@ namespace _837ParserPOC.DataModels
     public class Patient
     {
         public HierarchicalLevel HL { get; set; }
-        public PatientName PatientName { get; set; } // 2010CA
-        public PatientAddress PatientAddress { get; set; } // 2010CA
+        public List<NM1Name> PatientNames { get; set; } = new List<NM1Name>();     
+        
         public PatientDemographicInfo PatientDemographicInfo { get; set; } // 2010CA
+
+        public PatientInformation PatientInfo { get; set; } 
+
+        public List<ReferenceIdentificationObj> AdditionalReferenceInformation { get; set; } = new List<ReferenceIdentificationObj>();
+
         public List<Claim> Claims { get; set; } = new List<Claim>();
     }
 
-    public class PatientName
+    public class PatientInformation
     {
-        public string EntityIdentifierCode { get; set; }
-        public string EntityTypeQualifier { get; set; }
-        public string PatientLastName { get; set; }
-        public string PatientFirstName { get; set; }
-        public string PatientMiddleName { get; set; }
-        public string PatientNameSuffix { get; set; }
-        public string IdentificationCodeQualifier { get; set; }
-        public string PatientIdentifier { get; set; }
+        public string IndividualRelationshipCode { get; set; }
+        public string RelationshipCodeDescription { get; set; }
+        public string PatientLocationCode { get; set; }
+        public string PatientLocationCodeDescription { get; set; }
+        public string EmploymentStatusCode { get; set; }
+        public string EmploymentStatusCodeDescription { get; set; }
+        public string StudentStatusCode { get; set; }
+        public string DateOfDeath { get; set; }
+        public string UnitOrBasisForMeasurementCode { get; set; }
+        public string Weight { get; set; }
+        public string PregnancyIndicator { get; set; }
+        public string DateLastMenstrualPeriod { get; set; }
     }
 
     public class PatientAddress

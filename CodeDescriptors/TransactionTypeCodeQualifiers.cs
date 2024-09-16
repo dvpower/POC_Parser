@@ -25,11 +25,11 @@
         { "15", "Re-submission" }
     };
 
-    public static string GetDescription(string transactionTypeCode)
+    public static string GetDescription(string qualifierCode)
     {
-        return Descriptions.TryGetValue(transactionTypeCode, out var description)
+        return Descriptions.TryGetValue(qualifierCode, out var description)
             ? description
-            : "Unknown Transaction Type";
+            : $"Unknown Transaction Type {qualifierCode}";
     }
 
     public static bool IsValid(string transactionTypeCode)

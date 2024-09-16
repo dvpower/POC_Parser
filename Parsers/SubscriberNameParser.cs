@@ -8,30 +8,30 @@ using System.Threading.Tasks;
 
 namespace _837ParserPOC.Parsers
 {
-    public class SubscriberNameParser
-    {
-        public SubscriberName Parse(string line)
-        {
-            if (string.IsNullOrEmpty(line) || !line.StartsWith("NM1*IL*"))
-            {
-                throw new ArgumentException("Invalid NM1 segment for Subscriber Name");
-            }
+    //public class SubscriberNameParser
+    //{
+    //    public SubscriberName Parse(string line)
+    //    {
+    //        if (string.IsNullOrEmpty(line) || !line.StartsWith("NM1*IL*"))
+    //        {
+    //            throw new ArgumentException("Invalid NM1 segment for Subscriber Name");
+    //        }
 
-            string[] elements = line.Split('*');
+    //        string[] elements = line.Split('*');
 
-            return new SubscriberName
-            {
-                EntityIdentifierCode = elements[1],
-                EntityTypeQualifier = elements[2],
-                SubscriberLastName = elements[3],
-                SubscriberFirstName = elements.Length > 4 ? elements[4] : null,
-                SubscriberMiddleName = elements.Length > 5 ? elements[5] : null,
-                SubscriberNameSuffix = elements.Length > 7 ? elements[7] : null,
-                IdentificationCodeQualifier = elements.Length > 8 ? elements[8] : null,
-                SubscriberIdentifier = elements.Length > 9 ? elements[9].TrimEnd('~') : null
-            };
-        }
-    }
+    //        return new SubscriberName
+    //        {
+    //            EntityIdentifierCode = elements[1],
+    //            EntityTypeQualifier = elements[2],
+    //            SubscriberLastName = elements[3],
+    //            SubscriberFirstName = elements.Length > 4 ? elements[4] : null,
+    //            SubscriberMiddleName = elements.Length > 5 ? elements[5] : null,
+    //            SubscriberNameSuffix = elements.Length > 7 ? elements[7] : null,
+    //            IdentificationCodeQualifier = elements.Length > 8 ? elements[8] : null,
+    //            SubscriberIdentifier = elements.Length > 9 ? elements[9].TrimEnd('~') : null
+    //        };
+    //    }
+    //}
 
     public class SubscriberAddressParser
     {
@@ -79,25 +79,25 @@ namespace _837ParserPOC.Parsers
         }
     }
 
-    public class PayerNameParser
-    {
-        public PayerName Parse(string line)
-        {
-            if (string.IsNullOrEmpty(line) || !line.StartsWith("NM1*PR*"))
-            {
-                throw new ArgumentException("Invalid NM1 segment for Payer Name");
-            }
+    //public class PayerNameParser
+    //{
+    //    public PayerName Parse(string line)
+    //    {
+    //        if (string.IsNullOrEmpty(line) || !line.StartsWith("NM1*PR*"))
+    //        {
+    //            throw new ArgumentException("Invalid NM1 segment for Payer Name");
+    //        }
 
-            string[] elements = line.Split('*');
+    //        string[] elements = line.Split('*');
 
-            return new PayerName
-            {
-                EntityIdentifierCode = elements[1],
-                EntityTypeQualifier = elements[2],
-                PayerOrganizationName = elements[3],
-                IdentificationCodeQualifier = elements.Length > 8 ? elements[8] : null,
-                PayerIdentifier = elements.Length > 9 ? elements[9].TrimEnd('~') : null
-            };
-        }
-    }
+    //        return new PayerName
+    //        {
+    //            EntityIdentifierCode = elements[1],
+    //            EntityTypeQualifier = elements[2],
+    //            PayerOrganizationName = elements[3],
+    //            IdentificationCodeQualifier = elements.Length > 8 ? elements[8] : null,
+    //            PayerIdentifier = elements.Length > 9 ? elements[9].TrimEnd('~') : null
+    //        };
+    //    }
+    //}
 }

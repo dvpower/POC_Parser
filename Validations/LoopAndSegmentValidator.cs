@@ -18,11 +18,11 @@ namespace _837ParserPOC.Validations
             {
                 foreach (var billingProvider in transactionSet.HierarchicalStructure.BillingProviders)
                 {
-                    Validate2010AALoop(billingProvider, validationResult);
+                  
 
                     foreach (var subscriber in billingProvider.Subscribers)
                     {
-                        Validate2010BALoop(subscriber, validationResult);
+                        
 
                         foreach (var claim in subscriber.Claims)
                         {
@@ -40,30 +40,7 @@ namespace _837ParserPOC.Validations
             return validationResult;
         }
 
-        private void Validate2010AALoop(BillingProvider billingProvider, ValidationResult validationResult)
-        {
-            if (billingProvider.ProviderName == null)
-                AddError(validationResult, "Missing Billing Provider Name in 2010AA loop");
 
-            if (string.IsNullOrWhiteSpace(billingProvider.ProviderAddress?.AddressLine1))
-                AddError(validationResult, "Missing Billing Provider Address in 2010AA loop");
-
-            // Add more 2010AA loop specific validations here
-        }
-
-        private void Validate2010BALoop(Subscriber subscriber, ValidationResult validationResult)
-        {
-            if (subscriber.SubscriberName == null)
-                AddError(validationResult, "Missing Subscriber Name in 2010BA loop");
-
-            if (string.IsNullOrWhiteSpace(subscriber.SubscriberName?.SubscriberLastName))
-                AddError(validationResult, "Missing Subscriber Last Name in 2010BA loop");
-
-            if (string.IsNullOrWhiteSpace(subscriber.SubscriberName?.SubscriberFirstName))
-                AddError(validationResult, "Missing Subscriber First Name in 2010BA loop");
-
-            // Add more 2010BA loop specific validations here
-        }
 
         private void Validate2300Loop(Claim claim, ValidationResult validationResult)
         {

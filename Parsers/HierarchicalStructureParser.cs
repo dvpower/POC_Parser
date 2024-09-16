@@ -1,5 +1,7 @@
 ﻿using _837ParserPOC.DataModels;
+using POC837Parser.DataModels;
 using POC837Parser.Parsers;
+using POC837Parser.Parsers.Extractors;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -11,53 +13,51 @@ namespace _837ParserPOC.Parsers
     public class HierarchicalStructureParser
     {
         private readonly HLParser _hlParser;
-        private readonly ProviderNameParser _providerNameParser;
-        private readonly ProviderAddressParser _providerAddressParser;
+        private readonly NameParser _nameParser; 
+        private readonly AddressParser _addressParser;
         private readonly ProviderContactInformationParser _providerContactInformationParser;
-        private readonly PayToAddressParser _payToAddressParser;
-        private readonly PayToPlanNameParser _payToPlanNameParser;
-        private readonly SubscriberNameParser _subscriberNameParser;
+        private readonly ProviderInformationParser  _providerInformationParser;
+        private readonly CurrencyInformationParser _currencyParser;
         private readonly SubscriberInformationParser _subscriberInformationParser;
-        private readonly SubscriberAddressParser _subscriberAddressParser;
-        private readonly SubscriberDemographicInfoParser _subscriberDemographicInfoParser;
-        private readonly PayerNameParser _payerNameParser;
-        private readonly PatientNameParser _patientNameParser;
-        private readonly PatientAddressParser _patientAddressParser;
+        private readonly SubscriberDemographicInfoParser _subscriberDemographicInfoParser;        
         private readonly PatientDemographicInfoParser _patientDemographicInfoParser;
+        private readonly PatientInformationParser _patientInformationParser;
         private readonly ClaimInformationParser _claimInformationParser;
-        private readonly ClaimDateParser _claimDateParser;
-        private readonly ClaimAmountParser _claimAmountParser;
-        private readonly DiagnosisCodeParser _diagnosisCodeParser;
+        private readonly DateParser _claimDateParser;
+        private readonly ClaimLineParser _claimLineParser;
+        private readonly ClaimContractParser _claimContractParser;
+        private readonly NoteParser _claimNoteParser;
+        private readonly AmountParser _claimAmountParser;
+        //private readonly DiagnosisCodeParser _diagnosisCodeParser;
+        private readonly HISegmentParser _diagnosisCodeParser;
         private readonly ServiceLineParser _serviceLineParser;
         private readonly ReferenceIdentificationParser _referenceIdentificationParser;
-        private readonly PayToAddressNameParser _payToAddressNameParser;
-
-
+        private readonly ConditionsParser _conditionsParser;
 
 
         public HierarchicalStructureParser()
         {
             _hlParser = new HLParser();
-            _providerNameParser = new ProviderNameParser();
-            _providerAddressParser = new ProviderAddressParser();
+            _nameParser = new NameParser();
+            _addressParser = new AddressParser();
+            _currencyParser = new CurrencyInformationParser();
             _providerContactInformationParser = new ProviderContactInformationParser();
-            _payToAddressParser = new PayToAddressParser();
-            _payToPlanNameParser = new PayToPlanNameParser();
-            _subscriberNameParser = new SubscriberNameParser();
+            _providerInformationParser = new ProviderInformationParser();
             _subscriberInformationParser = new SubscriberInformationParser();
-            _subscriberAddressParser = new SubscriberAddressParser();
-            _subscriberDemographicInfoParser = new SubscriberDemographicInfoParser();
-            _payerNameParser = new PayerNameParser();
-            _patientNameParser = new PatientNameParser();
-            _patientAddressParser = new PatientAddressParser();
+            _subscriberDemographicInfoParser = new SubscriberDemographicInfoParser();            
             _patientDemographicInfoParser = new PatientDemographicInfoParser();
+            _patientInformationParser = new PatientInformationParser();
             _claimInformationParser = new ClaimInformationParser();
-            _claimDateParser = new ClaimDateParser();
-            _claimAmountParser = new ClaimAmountParser();
-            _diagnosisCodeParser = new DiagnosisCodeParser();
+            _claimDateParser = new DateParser();
+            _claimAmountParser = new AmountParser();
+            //_diagnosisCodeParser = new DiagnosisCodeParser();
+            _diagnosisCodeParser = new HISegmentParser();
             _serviceLineParser = new ServiceLineParser();
             _referenceIdentificationParser = new ReferenceIdentificationParser();
-            _payToAddressNameParser = new PayToAddressNameParser();
+            _claimNoteParser = new NoteParser();
+            _claimContractParser = new ClaimContractParser();
+            _conditionsParser = new ConditionsParser();
+            _claimLineParser = new ClaimLineParser();
         }
 
         public HierarchicalStructure Parse(string[] lines)
@@ -72,7 +72,7 @@ namespace _837ParserPOC.Parsers
             for (int i = 0; i < hlSegments.Length; i++)
             {
                 var hlIndex = Array.IndexOf(lines, hlSegments[i]);
-                var hl = _hlParser.Parse(hlSegments[i]);
+                var hl = _hlParser.Parse(hlSegments[i]); 
 
                 switch (hl.HierarchicalLevelCode)
                 {
@@ -91,13 +91,75 @@ namespace _837ParserPOC.Parsers
                         currentSubscriber?.Patients.Add(currentPatient);
                         ParsePatientLoops(lines, hlIndex, currentPatient);
                         break;
+                    case "24": // Claim (if not included in subscriber)
+                        Console.WriteLine("We have a HL Claim level -24-, but no processing for it");
+                        throw new InvalidOperationException($"Unexpected Claim level -24- Hierarchical Level Code: {hl.HierarchicalLevelCode}");
+                    
                     default:
                         throw new InvalidOperationException($"Unexpected Hierarchical Level Code: {hl.HierarchicalLevelCode}");
                 }
             }
 
+            //// Break into 4 segments 
+            //var billingProvider = new List<string>();
+            //var subscriber = new List<string>();
+            //var patient = new List<string>();
+            //var claim = new List<string>();
+
+            //List<string> currentList = null;
+
+            //foreach (var line in lines)
+            //{
+            //    if (line.StartsWith("HL*1**20"))
+            //    {
+            //        currentList = billingProvider;
+            //    }
+            //    else if (line.StartsWith("HL*2*1*22"))
+            //    {
+            //        currentList = subscriber;
+            //    }
+            //    else if (line.StartsWith("HL*3*2*23"))
+            //    {
+            //        currentList = patient;
+            //    }
+            //    else if (line.Contains("CLM*"))
+            //    {
+            //        currentList = claim;
+            //    }
+
+            //    if (currentList != null)
+            //    {
+            //        currentList.Add(line.Trim());
+            //    }
+            //}
+
+
+            //currentProvider = new BillingProvider { HL = hl };
+            //structure.BillingProviders.Add(currentProvider);
+            //ParseBillingProviderLoops(billingProvider.ToArray(), hlIndex, currentProvider);
+
+            //currentSubscriber = new Subscriber { HL = hl };
+            //currentProvider?.Subscribers.Add(currentSubscriber);
+            //ParseSubscriberLoops(subscriber.ToArray(), hlIndex, currentSubscriber);
+
+
+            //currentPatient = new Patient { HL = hl };
+            //currentSubscriber?.Patients.Add(currentPatient);
+            //ParsePatientLoops(patient.ToArray(), hlIndex, currentPatient);
+
+            //ParseClaims(claim.ToArray(), structure);
+
+
             // Parse claims after all hierarchical levels
-            ParseClaims(lines, structure);
+
+            var allClaims = ClaimsExtractor.ExtractClaims( lines );
+            foreach (var claimLines in allClaims)
+            {
+                var claim = ParseClaim(claimLines);
+                structure.BillingProviders.First().Subscribers.First().Claims.Add(claim);
+            }
+
+           // ParseClaims(lines, structure);
 
             return structure;
         }
@@ -120,7 +182,7 @@ namespace _837ParserPOC.Parsers
                         i++;
                     }
 
-                    var serviceLine = _serviceLineParser.Parse(serviceLineLines.ToArray());
+                    var serviceLine = _serviceLineParser.Parse(serviceLineLines);
                     claim.ServiceLines.Add(serviceLine);
 
                     // No need to decrement i here, as we want to check the next LX* or CLM*
@@ -133,48 +195,130 @@ namespace _837ParserPOC.Parsers
             return i;
         }
 
-
-        private void ParseClaims(string[] lines, HierarchicalStructure structure)
+        private ServiceLine ParseServiceLine(List<string> lines)
         {
-            for (int i = 0; i < lines.Length; i++)
+            var parser = new ServiceLineParser();            
+            return parser.Parse(lines); 
+        }
+
+
+        private Claim ParseClaim(List<string> lines)
+        {
+            var claim = new Claim();
+
+            // Seperate Claim level data from Service lines
+            var claimLines = new ServiceLineExtractor().ProcessClaimData(lines);
+
+            // Process the general Claim Lines
+            foreach (var line in claimLines.GeneralInfo)
             {
-                if (lines[i].StartsWith("CLM*"))
+                if (line.StartsWith("CLM*"))
                 {
-                    var claim = new Claim();
-                    claim.ClaimInfo = _claimInformationParser.Parse(lines[i]);
-
-                    // Parse claim dates
-                    i++;
-                    if (lines[i].StartsWith("DTP*434*"))
-                    {
-                        _claimDateParser.ParseServiceDates(lines[i], claim.ClaimInfo);
-                    }
-
-                    // Parse claim amounts
-                    claim.ClaimAmount = _claimAmountParser.Parse(lines.Skip(i).TakeWhile(l => !l.StartsWith("CLM*")).ToArray());
-
-                    // Parse diagnosis codes
-                    var diagnosisLine = Array.Find(lines.Skip(i).ToArray(), l => l.StartsWith("HI*"));
-                    if (diagnosisLine != null)
-                    {
-                        claim.DiagnosisCodes = _diagnosisCodeParser.Parse(diagnosisLine);
-                    }
-
-                    // Parse service lines
-                    i = ParseServiceLines(lines, i + 1, claim);
-
-                    // Add claim to the appropriate patient or subscriber
-                    AddClaimToStructure(claim, structure);
-
-                    // Move to the next claim
-                    while (i < lines.Length && !lines[i].StartsWith("CLM*"))
-                    {
-                        i++;
-                    }
-                    i--; // Adjust for the loop increment
+                    claim.ClaimInfo = _claimInformationParser.Parse(line);
+                }
+                else if (line.StartsWith("DTP*434*"))
+                {
+                    _claimDateParser.ParseServiceDates(line, claim.ClaimInfo);
+                }
+                else if (line.StartsWith("AMT*"))
+                {
+                    claim.Amounts.Add(_claimAmountParser.Parse(line));
+                }
+                else if (line.StartsWith("REF*"))
+                {
+                    claim.AdditionalReferenceInformation.Add(_referenceIdentificationParser.Parse(line));
+                }
+                else if (line.StartsWith("DTP*"))
+                {
+                    claim.ClaimDates.Add(_claimDateParser.Parse(line));
+                }
+                else if (line.StartsWith("CL1*"))  // Claim Line Item
+                {
+                    claim.ClaimLine = _claimLineParser.Parse(line);
+                    // TODO claim information line on the claim
+                }
+                else if (line.StartsWith("CN1*"))
+                {
+                    claim.ContractInfo = _claimContractParser.Parse(line);
+                }
+                else if (line.StartsWith("NTE*"))
+                {
+                    claim.ClaimNotes.Add(_claimNoteParser.Parse(line));
+                }
+                else if (line.StartsWith("CRC*"))
+                {
+                    claim.ClaimConditions.Add(_conditionsParser.Parse(line));
+                }
+                else if (line.StartsWith("NM1*"))
+                {
+                    claim.Names.Add(_nameParser.Parse(line));
+                }
+                else if (line.StartsWith("HI*"))
+                {
+                    claim.DiagnosisCodes.AddRange(_diagnosisCodeParser.Parse(line));
+                    //claim.Names.Add(_nameParser.Parse(line));
                 }
             }
+
+            // A claim can have multiple service lines, parse those 
+            foreach (var serviceLine in claimLines.ServiceLines)
+            {
+                var svLine = ParseServiceLine(serviceLine);
+                claim.ServiceLines.Add(svLine);
+            }
+
+            return claim;
+
         }
+        //private void ParseClaims(string[] lines, HierarchicalStructure structure)
+        //{
+        //    for (int i = 0; i < lines.Length; i++)
+        //    {
+        //        if (lines[i].StartsWith("CLM*"))
+        //        {
+        //            var claim = new Claim();
+        //            claim.ClaimInfo = _claimInformationParser.Parse(lines[i]);
+        //            // This is a new claim
+
+        //            // Parse claim dates
+        //            i++;
+        //            if (lines[i].StartsWith("DTP*434*"))
+        //            {
+        //                _claimDateParser.ParseServiceDates(lines[i], claim.ClaimInfo);
+        //            }
+
+        //            // Parse claim amounts
+        //            //claim.ClaimAmount = _claimAmountParser.Parse(lines.Skip(i).TakeWhile(l => !l.StartsWith("CLM*")).ToArray());
+
+        //            if (lines[i].StartsWith("AMT*"))
+        //            {
+        //                claim.Amounts.Add(_claimAmountParser.Parse(lines[i]));
+        //            }
+
+
+
+        //            // Parse diagnosis codes
+        //            var diagnosisLine = Array.Find(lines.Skip(i).ToArray(), l => l.StartsWith("HI*"));
+        //            if (diagnosisLine != null)
+        //            {
+        //                claim.DiagnosisCodes = _diagnosisCodeParser.Parse(diagnosisLine);
+        //            }
+
+        //            // Parse service lines
+        //            i = ParseServiceLines(lines, i + 1, claim);
+
+        //            // Add claim to the appropriate patient or subscriber
+        //            AddClaimToStructure(claim, structure);
+
+        //            // Move to the next claim
+        //            while (i < lines.Length && !lines[i].StartsWith("CLM*"))
+        //            {
+        //                i++;
+        //            }
+        //            i--; // Adjust for the loop increment
+        //        }
+        //    }
+        //}
 
         private void AddClaimToStructure(Claim claim, HierarchicalStructure structure)
         {
@@ -204,55 +348,48 @@ namespace _837ParserPOC.Parsers
                     break;
                 }
 
-                if (lines[i].StartsWith("NM1*QC")) // 2010CA Patient Name
+                //if (lines[i].StartsWith("NM1*QC")) // 2010CA Patient Name
+                //{
+                //    patient.PatientName = _patientNameParser.Parse(lines[i]);
+                //}
+                if (lines[i].StartsWith("NM1*")) // Name
                 {
-                    patient.PatientName = _patientNameParser.Parse(lines[i]);
+                    patient.PatientNames.Add(_nameParser.Parse(lines[i]));
+                }
+                else if (lines[i].StartsWith("REF*")) // 2010AA Billing Provider Secondary Identification
+                {
+                    patient.AdditionalReferenceInformation.Add(_referenceIdentificationParser.Parse(lines[i]));
                 }
                 else if (lines[i].StartsWith("N3*")) // 2010CA Patient Address
                 {
-                    var addressLines = new List<string> { lines[i] };
-                    if (i + 1 < lines.Length && lines[i + 1].StartsWith("N4*"))
+                    var name = patient.PatientNames.Last();  // An address is associated with the most recent Name
+                    if (name != null)
                     {
-                        addressLines.Add(lines[i + 1]);
-                        i++; // Skip the N4 line in the next iteration
+                        var addressLines = new List<string> { lines[i] };
+                        if (i + 1 < lines.Length && lines[i + 1].StartsWith("N4*"))
+                        {
+                            addressLines.Add(lines[i + 1]);
+                            i++; // Skip the N4 line in the next iteration
+                        }
+                        name.Address = _addressParser.Parse(addressLines.ToArray());
                     }
-                    patient.PatientAddress = _patientAddressParser.Parse(addressLines.ToArray());
                 }
                 else if (lines[i].StartsWith("DMG*")) // 2010CA Patient Demographic Information
                 {
                     patient.PatientDemographicInfo = _patientDemographicInfoParser.Parse(lines[i]);
                 }
+                else if (lines[i].StartsWith("PAT*")) // Patient Information
+                {
+                    patient.PatientInfo = _patientInformationParser.Parse(lines[i]);
+                }
+                else
+                {
+                    Console.WriteLine($"We do not have support for {lines[i]}");
+                }
                 // Add more conditions here for other segments related to the Patient
             }
         }
 
-        private void ParsePatientLoopsOLD(string[] lines, ref int currentIndex, Patient patient)
-        {
-            while (currentIndex < lines.Length && !lines[currentIndex].StartsWith("HL*"))
-            {
-                if (lines[currentIndex].StartsWith("NM1*QC")) // 2010CA
-                {
-                    patient.PatientName = _patientNameParser.Parse(lines[currentIndex]);
-                    currentIndex++;
-
-                    if (lines[currentIndex].StartsWith("N3*"))
-                    {
-                        patient.PatientAddress = _patientAddressParser.Parse(new[] { lines[currentIndex], lines[currentIndex + 1] });
-                        currentIndex += 2;
-                    }
-
-                    if (lines[currentIndex].StartsWith("DMG*"))
-                    {
-                        patient.PatientDemographicInfo = _patientDemographicInfoParser.Parse(lines[currentIndex]);
-                        currentIndex++;
-                    }
-                }
-                else
-                {
-                    currentIndex++;
-                }
-            }
-        }
 
         private void ParseSubscriberLoops(string[] lines, int startIndex, Subscriber subscriber)
         {
@@ -262,69 +399,43 @@ namespace _837ParserPOC.Parsers
                 {
                     break;
                 }
-
-                if (lines[i].StartsWith("NM1*IL")) // 2010BA Subscriber Name
+                
+                if (lines[i].StartsWith("NM1*")) // Name
                 {
-                    subscriber.SubscriberName = _subscriberNameParser.Parse(lines[i]);
+                    subscriber.SubscriberNames.Add(_nameParser.Parse(lines[i]));
                 }
-
+                else if (lines[i].StartsWith("REF*")) // 2010AA Billing Provider Secondary Identification
+                {
+                    subscriber.AdditionalReferenceInformation.Add(_referenceIdentificationParser.Parse(lines[i]));
+                }
                 else if (lines[i].StartsWith("SBR*")) // Loop 2000B (Subscriber Info)
                 {
                     subscriber.SubscriberInformation = _subscriberInformationParser.Parse(lines[i]);
                 }
-
                 else if (lines[i].StartsWith("N3*")) // 2010BA Subscriber Address
                 {
-                    var addressLines = new List<string> { lines[i] };
-                    if (i + 1 < lines.Length && lines[i + 1].StartsWith("N4*"))
+                    var name = subscriber.SubscriberNames.Last();  // An address is associated with the most recent Name
+                    if (name != null)
                     {
-                        addressLines.Add(lines[i + 1]);
-                        i++; // Skip the N4 line in the next iteration
+                        var addressLines = new List<string> { lines[i] };
+                        if (i + 1 < lines.Length && lines[i + 1].StartsWith("N4*"))
+                        {
+                            addressLines.Add(lines[i + 1]);
+                            i++; // Skip the N4 line in the next iteration
+                        }
+                        name.Address = _addressParser.Parse(addressLines.ToArray());
                     }
-                    subscriber.SubscriberAddress = _subscriberAddressParser.Parse(addressLines.ToArray());
                 }
                 else if (lines[i].StartsWith("DMG*")) // 2010BA Subscriber Demographic Information
                 {
                     subscriber.SubscriberDemographicInfo = _subscriberDemographicInfoParser.Parse(lines[i]);
                 }
-                else if (lines[i].StartsWith("NM1*PR")) // 2010BB Payer Name
-                {
-                    subscriber.PayerName = _payerNameParser.Parse(lines[i]);
-                }
-                // Add more conditions here for other segments related to the Subscriber
-            }
-        }
-
-        private void ParseSubscriberLoopsOLD(string[] lines, ref int currentIndex, Subscriber subscriber)
-        {
-            while (currentIndex < lines.Length && !lines[currentIndex].StartsWith("HL*"))
-            {
-                if (lines[currentIndex].StartsWith("NM1*IL")) // 2010BA
-                {
-                    subscriber.SubscriberName = _subscriberNameParser.Parse(lines[currentIndex]);
-                    currentIndex++;
-
-                    if (lines[currentIndex].StartsWith("N3*"))
-                    {
-                        subscriber.SubscriberAddress = _subscriberAddressParser.Parse(new[] { lines[currentIndex], lines[currentIndex + 1] });
-                        currentIndex += 2;
-                    }
-
-                    if (lines[currentIndex].StartsWith("DMG*"))
-                    {
-                        subscriber.SubscriberDemographicInfo = _subscriberDemographicInfoParser.Parse(lines[currentIndex]);
-                        currentIndex++;
-                    }
-                }
-                else if (lines[currentIndex].StartsWith("NM1*PR")) // 2010BB
-                {
-                    subscriber.PayerName = _payerNameParser.Parse(lines[currentIndex]);
-                    currentIndex++;
-                }
                 else
                 {
-                    currentIndex++;
+                    Console.WriteLine($"We do not have support for {lines[i]}");
                 }
+
+                // Add more conditions here for other segments related to the Subscriber
             }
         }
 
@@ -338,92 +449,58 @@ namespace _837ParserPOC.Parsers
                     break;
                 }
 
-                if (lines[i].StartsWith("NM1*85")) // 2010AA Billing Provider Name
+                if (lines[i].StartsWith("NM1")) //  Billing Provider Name
                 {
-                    provider.ProviderName = _providerNameParser.Parse(lines[i]);
+                    provider.BillingProviderNames.Add(_nameParser.Parse(lines[i]));
                 }
-                else if (lines[i].StartsWith("N3*")) // 2010AA Billing Provider Address
-                {
-                    var addressLines = new List<string> { lines[i] };
-                    if (i + 1 < lines.Length && lines[i + 1].StartsWith("N4*"))
+                else if (lines[i].StartsWith("N3*")) 
+                {                    
+                    var name = provider.BillingProviderNames.Last();  // An address is associated with the most recent Name
+                    if (name != null)
                     {
-                        addressLines.Add(lines[i + 1]);
-                        i++; // Skip the N4 line in the next iteration
+                        var addressLines = new List<string> { lines[i] };
+                        if (i + 1 < lines.Length && lines[i + 1].StartsWith("N4*"))
+                        {
+                            addressLines.Add(lines[i + 1]);
+                            i++; // Skip the N4 line in the next iteration
+                        }
+                        name.Address = _addressParser.Parse(addressLines.ToArray());
                     }
-                    provider.ProviderAddress = _providerAddressParser.Parse(addressLines.ToArray());
                 }
                 else if (lines[i].StartsWith("REF*")) // 2010AA Billing Provider Secondary Identification
-                {
-                    var secondaryIdentification = _referenceIdentificationParser.Parse(lines[i]);
-                    provider.SecondaryIdentifications.Add(secondaryIdentification);
+                {          
+                    provider.AdditionalReferenceInformation.Add(_referenceIdentificationParser.Parse(lines[i]));
                 }
                 else if (lines[i].StartsWith("PER*")) // 2010AA Billing Provider Contact Information
                 {
                     provider.ProviderContactInformation = _providerContactInformationParser.Parse(lines[i]);
                 }
-                else if (lines[i].StartsWith("NM1*87")) // 2010AB Pay-to Address Name
+                else if (lines[i].StartsWith("CUR*")) // Currency 
                 {
-                    provider.PayToAddressName = _payToAddressNameParser.Parse(lines[i]);
+                    provider.ProviderCurrencyInformation= _currencyParser.Parse(lines[i]);
                 }
-                else if (lines[i].StartsWith("N3*") && provider.PayToAddress == null) // 2010AB Pay-to Address
+                else if (lines[i].StartsWith("PRV*"))  
                 {
-                    var addressLines = new List<string> { lines[i] };
-                    if (i + 1 < lines.Length && lines[i + 1].StartsWith("N4*"))
-                    {
-                        addressLines.Add(lines[i + 1]);
-                        i++; // Skip the N4 line in the next iteration
-                    }
-                    provider.PayToAddress = _payToAddressParser.Parse(addressLines.ToArray());
+                    provider.ProviderInformation.Add (_providerInformationParser.Parse(lines[i]));
                 }
-                else if (lines[i].StartsWith("NM1*PE")) // 2010AC Pay-to Plan Name
+
+                //else if (lines[i].StartsWith("N3*") && provider.PayToAddress == null) // 2010AB Pay-to Address
+                //{
+                //    var addressLines = new List<string> { lines[i] };
+                //    if (i + 1 < lines.Length && lines[i + 1].StartsWith("N4*"))
+                //    {
+                //        addressLines.Add(lines[i + 1]);
+                //        i++; // Skip the N4 line in the next iteration
+                //    }
+                //    provider.PayToAddress = _payToAddressParser.Parse(addressLines.ToArray());
+                //}    
+                else
                 {
-                    provider.PayToPlanName = _payToPlanNameParser.Parse(lines[i]);
+                    Console.WriteLine($"We do not have support for {lines[i]}");
                 }
                 // Add more conditions here for other segments related to the Billing Provider
             }
         }
-
-        private void ParseBillingProviderLoopsOLD(string[] lines, ref int currentIndex, BillingProvider provider)
-        {
-            while (currentIndex < lines.Length && !lines[currentIndex].StartsWith("HL*"))
-            {
-                if (lines[currentIndex].StartsWith("NM1*85")) // 2010AA
-                {
-                    provider.ProviderName = _providerNameParser.Parse(lines[currentIndex]);
-                    currentIndex++;
-
-                    if (lines[currentIndex].StartsWith("N3*"))
-                    {
-                        provider.ProviderAddress = _providerAddressParser.Parse(new[] { lines[currentIndex], lines[currentIndex + 1] });
-                        currentIndex += 2;
-                    }
-
-                    if (lines[currentIndex].StartsWith("PER*"))
-                    {
-                        provider.ProviderContactInformation = _providerContactInformationParser.Parse(lines[currentIndex]);
-                        currentIndex++;
-                    }
-                }
-                else if (lines[currentIndex].StartsWith("NM1*87")) // 2010AB
-                {
-                    currentIndex++;
-
-                    if (lines[currentIndex].StartsWith("N3*"))
-                    {
-                        provider.PayToAddress = _payToAddressParser.Parse(new[] { lines[currentIndex], lines[currentIndex + 1] });
-                        currentIndex += 2;
-                    }
-                }
-                else if (lines[currentIndex].StartsWith("NM1*PE")) // 2010AC
-                {
-                    provider.PayToPlanName = _payToPlanNameParser.Parse(lines[currentIndex]);
-                    currentIndex++;
-                }
-                else
-                {
-                    currentIndex++;
-                }
-            }
-        }
+       
     }
 }
